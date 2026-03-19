@@ -282,23 +282,37 @@ export default {
   },
 
   methods: {
-    handleLogin({ username, password }) {
-      // 保存认证凭证到 localStorage
+    async handleLogin({ username, password }) {
       const credentials = btoa(`${username}:${password}`);
+
+      try {
+        const verifyResp = await fetch("/raw/_$flaredrive$/auth-check", {
+          headers: {
+            Authorization: `Basic ${credentials}`,
+          },
+        });
+
+        if (verifyResp.status === 401) {
+          alert("用户名或密码错误");
+          return;
+        }
+      } catch (_e) {
+        alert("登录验证失败，请稍后重试");
+        return;
+      }
+
       localStorage.setItem("auth", credentials);
-      
-      // 设置 axios 默认请求头
       axios.defaults.headers.common["Authorization"] = `Basic ${credentials}`;
-      
+      document.cookie = `auth=${encodeURIComponent(credentials)}; Path=/; SameSite=Lax`;
+
       this.isLoggedIn = true;
       this.username = username;
-      
-      // 重新加载文件列表
       this.fetchFiles();
     },
 
     logout() {
       localStorage.removeItem("auth");
+      document.cookie = "auth=; Path=/; Max-Age=0; SameSite=Lax";
       delete axios.defaults.headers.common["Authorization"];
       this.isLoggedIn = false;
       this.username = "";
@@ -678,6 +692,7 @@ export default {
     const savedAuth = localStorage.getItem("auth");
     if (savedAuth) {
       axios.defaults.headers.common["Authorization"] = `Basic ${savedAuth}`;
+      document.cookie = `auth=${encodeURIComponent(savedAuth)}; Path=/; SameSite=Lax`;
       this.isLoggedIn = true;
       try {
         const decoded = atob(savedAuth);
