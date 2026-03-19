@@ -1,17 +1,16 @@
 # Cloudflare Workers 配置
 # 同时支持 Workers 和 Pages 部署
 
-name = "flaredrive"
+name = "r2cloud"
 main = "functions/_middleware.ts"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
-type = "service"
 
 # R2 存储桶绑定
 [[r2_buckets]]
 binding = "BUCKET"
-bucket_name = "production-bucket"
-preview_bucket_name = "local-bucket"
+bucket_name = "r2cloud"
+preview_bucket_name = "r2cloud"
 
 # 开发服务器
 [env.development]
