@@ -5,6 +5,7 @@ name = "flaredrive"
 main = "functions/_middleware.ts"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
+type = "service"
 
 # R2 存储桶绑定
 [[r2_buckets]]

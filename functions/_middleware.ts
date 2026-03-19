@@ -97,5 +97,16 @@ function notFound() {
   );
 }
 
+// 导出默认 Worker
+export default {
+  fetch: async (request: Request, env: any, ctx: any) => {
+    return onRequest({
+      request,
+      env,
+      params: {},
+    });
+  },
+};
+
 
 
