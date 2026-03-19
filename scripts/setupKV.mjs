@@ -106,28 +106,27 @@ async function getKVIds() {
 async function updateWranglerConfig(ids) {
   const wranglerPath = path.join(__dirname, "..", "wrangler.toml");
   let content = await fs.readFile(wranglerPath, "utf-8");
-  
-  // 查找 KV 配置块并更新
+
   const kvBlock = `# KV 命名空间绑定（缓存）
-# 注：id 和 preview_id 由 predeploy.mjs 自动创建和管理
 [[kv_namespaces]]
 binding = "CACHE"
 id = "${ids.prodId}"
 preview_id = "${ids.previewId}"`;
-  
-  const oldBlock = /# KV 命名空间绑定.*?\[\[kv_namespaces\]\]\s*binding = "CACHE"[^\n]*/s;
-  
-  if (content.includes('id = "r2cloud-cache"')) {
+
+  // 1) 已有 kv_namespaces 块：直接替换整个块
+  if (/\[\[kv_namespaces\]\]/.test(content)) {
     content = content.replace(
-      /# KV 命名空间绑定.*?\[\[kv_namespaces\]\]\s*binding = "CACHE"\s*(?:id = "[^"]*"\s*)?(?:preview_id = "[^"]*"\s*)?/s,
-      kvBlock
+      /#\s*KV[\s\S]*?\[\[kv_namespaces\]\][\s\S]*?(?=\n\[[^\]]+\]|\n#|$)/,
+      `${kvBlock}\n`
     );
   } else {
-    // 如果还没有 id/preview_id，添加它们
-    content = content.replace(
-      /(\[\[kv_namespaces\]\]\s*binding = "CACHE")/,
-      `$1\nid = "${ids.prodId}"\npreview_id = "${ids.previewId}"`
-    );
+    // 2) 没有 kv_namespaces 块：插入到 [vars] 之前
+    if (/\n\[vars\]/.test(content)) {
+      content = content.replace(/\n\[vars\]/, `\n\n${kvBlock}\n\n[vars]`);
+    } else {
+      // 3) 兜底：追加到文件末尾
+      content = `${content.trim()}\n\n${kvBlock}\n`;
+    }
   }
   
   await fs.writeFile(wranglerPath, content);
