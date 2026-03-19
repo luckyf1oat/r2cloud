@@ -64,13 +64,27 @@ export async function onRequest(context: any) {
     }
 
     // ==================== 静态文件处理 ====================
-    // 让 Pages/Workers 原生处理静态文件和 SPA 路由
-    // 如果 context.next 存在（Pages），调用它
+    // Pages: 使用 context.next()
     if (context.next && typeof context.next === "function") {
       return context.next();
     }
 
-    // 对于 Workers，返回 404（因为静态文件不存在）
+    // Workers: 使用 ASSETS 绑定处理静态资源与 SPA 路由
+    if ((request.method === "GET" || request.method === "HEAD") && env?.ASSETS?.fetch) {
+      const staticResp = await env.ASSETS.fetch(request);
+      if (staticResp.status !== 404) {
+        return staticResp;
+      }
+
+      const spaUrl = new URL(request.url);
+      spaUrl.pathname = "/index.html";
+      const spaRequest = new Request(spaUrl.toString(), request);
+      const spaResp = await env.ASSETS.fetch(spaRequest);
+      if (spaResp.status !== 404) {
+        return spaResp;
+      }
+    }
+
     return notFound();
   } catch (error: any) {
     console.error("[Middleware Error]", error);

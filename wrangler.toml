@@ -9,6 +9,10 @@ compatibility_flags = ["nodejs_compat"]
 [build]
 command = "node scripts/predeploy.mjs"
 
+[assets]
+directory = "."
+binding = "ASSETS"
+
 # R2 存储桶绑定
 [[r2_buckets]]
 binding = "BUCKET"
